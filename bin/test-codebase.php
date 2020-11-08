@@ -75,14 +75,14 @@ class CheckCodeBaseCommand extends Command
     {
         $testClass = strstr($fileName, "tests/$testGroup/");
         $testClass = str_replace("tests/$testGroup/", '', $testClass);
-        $testClass = str_replace('.php', '', $testClass);
+//        $testClass = str_replace('.php', '', $testClass);
         $testClass = str_replace('/', '\\', $testClass);
         return $testClass;
     }
 
     private function pushResultToRunner(array $classes, $branch)
     {
-        $site = getenv('APP_ENV') == 'development' ? 'http://test-runner.loc' : 'http://test-runner.essay.office';
+        $site = getenv('APP_ENV') == 'development' ? 'http://runner.nginx' : 'http://runner.nginx';
         $url = $site . '/cases/existing-classes';
 
         $post = [

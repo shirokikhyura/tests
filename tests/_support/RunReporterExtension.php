@@ -241,12 +241,12 @@ class RunReporterExtension extends \Codeception\Extension
 
     private function pushArtifactsToRunner($filePath, $type = '')
     {
-        $hostIp = getenv('APP_ENV') == 'development' ? 'test-runner.loc' : '192.168.216.75';
-        // ssh 192.168.216.88 mkdir /var/www/test-runner/public/img/artifacts/11
+        $hostIp = getenv('APP_ENV') == 'development' ? 'runner.nginx' : 'runner.nginx';
+        // ssh 192.168.216.88 mkdir /var/www/runner/public/img/artifacts/11
         $this->writeln(" ");
         $this->messageFactory->message('Send artifacts --')->style('comment')->writeln();
         $artifactDir = sprintf(
-            "/var/www/test-runner/public/img/artifacts/%s",
+            "/var/www/runner/public/img/artifacts/%s",
             $this->runId
         );
         $command = sprintf(
@@ -265,14 +265,14 @@ class RunReporterExtension extends \Codeception\Extension
             $newPath = str_replace('#', '', $newPath);
             $newPath = str_replace(',', '-', $newPath);
             $command = sprintf(
-                "scp %s {$hostIp}:/var/www/test-runner/public/img/artifacts/%s/%s",
+                "scp %s {$hostIp}:/var/www/runner/public/img/artifacts/%s/%s",
                 $filePath,
                 $this->runId,
                 $newPath
             );
         } else {
             $command = sprintf(
-                "scp %s {$hostIp}:/var/www/test-runner/public/img/artifacts/%s/",
+                "scp %s {$hostIp}:/var/www/runner/public/img/artifacts/%s/",
                 $filePath,
                 $this->runId
             );
@@ -293,13 +293,16 @@ class RunReporterExtension extends \Codeception\Extension
             'steps' => $result['steps'],
             'execTime' => $result['execTime'],
         ];
+        $this->writeln("# Send result to runner");
+        $this->writeln(json_encode($post));
 
         $response = $this->pushToRunner('/test-run/result/' . $this->runId, $post);
+        $this->writeln("# Send status: " . $response->getStatusCode());
     }
 
     private function pushToRunner($uri, array $post)
     {
-        $hostSite = getenv('APP_ENV') == 'development' ? 'http://test-runner.loc' : 'http://test-runner.essay.office';
+        $hostSite = getenv('APP_ENV') == 'development' ? 'http://runner.nginx' : 'http://runner.nginx';
         $url = $hostSite . $uri;
 
         $config = array(
@@ -335,7 +338,7 @@ class RunReporterExtension extends \Codeception\Extension
 
         $testClass = strstr($fileName, $testDir);
         $testClass = str_replace($testDir, '', $testClass);
-        $testClass = str_replace('.php', '', $testClass);
+//        $testClass = str_replace('.php', '', $testClass);
         $testClass = str_replace('/', '\\', $testClass);
         return $testClass;
     }

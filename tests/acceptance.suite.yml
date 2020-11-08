@@ -3,11 +3,11 @@ modules:
     enabled:
         - WebDriver
         - \Helper\Acceptance
-        - \Helper\QaApi
         - \Helper\Site
     config:
         WebDriver:
-            url: http://localhost
+            url: http://tests.chrome
+            host: 'tests.chrome'
             browser: 'chrome'
             window_size: 1920x1280
             restart: true

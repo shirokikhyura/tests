@@ -2,7 +2,6 @@ actor: UiTester
 modules:
     enabled:
         - \Helper\Ui
-        - \Helper\QaApi
         - \Helper\Site
         - WebDriver
         - VisualCeption:
@@ -10,6 +9,7 @@ modules:
             saveCurrentImageIfFailure: true                       # if true, VisualCeption saves the current
     config:
         WebDriver:
-            url: http://localhost
+            url: http://tests.chrome
+            host: 'tests.chrome'
             browser: 'chrome'
             window_size: 1920x1280

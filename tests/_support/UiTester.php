@@ -68,7 +68,7 @@ class UiTester extends \Codeception\Actor
         $this->scrollUpAndDown();
         $this->waitForPageLoaded();
         $windowBorders = 600;
-        $height = $this->executeJS('return $( document ).height();') + $windowBorders;
+        $height = $this->executeJS('return document.documentElement.scrollHeight;') + $windowBorders;
         return $height;
     }
 
