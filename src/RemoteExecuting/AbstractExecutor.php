@@ -43,7 +43,7 @@ abstract class AbstractExecutor
             ),
         );
 
-        $hostSite = getenv('APP_ENV') == 'development' ? 'http://test-runner.loc' : 'http://test-runner.essay.office';
+        $hostSite = getenv('APP_ENV') == 'development' ? 'http://runner.nginx' : 'http://runner.nginx';
         $client = new \Zend\Http\Client($hostSite . $this->getEntryPoint(), $config);
         $client->setRawBody(json_encode($post));
         $client->setMethod('POST');

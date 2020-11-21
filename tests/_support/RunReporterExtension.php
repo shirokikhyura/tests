@@ -2,7 +2,12 @@
 
 use Codeception\Events;
 use Codeception\Event\FailEvent;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use Predis\ClientInterface;
 
+/**
+ * Class RunReporterExtension
+ */
 class RunReporterExtension extends \Codeception\Extension
 {
     public static $events = [
@@ -12,18 +17,28 @@ class RunReporterExtension extends \Codeception\Extension
         Events::TEST_ERROR => 'testError',
         Events::STEP_AFTER => 'stepAfter',
         Events::STEP_BEFORE => 'stepBefore',
-        Events::TEST_FAIL_PRINT => 'sendArtifacts',
+        Events::TEST_FAIL_PRINT => 'testFailPrint',
     ];
 
     protected $steps = [];
+
     protected $currentStep = [];
+
     protected $lastMetaStepKey = [];
 
     protected $runId;
 
     protected $metaStep;
 
+    protected $testResult;
+
     protected $testStartTime;
+
+    protected $testEndTime;
+
+    protected $testFailMessage;
+
+    private $client;
 
     /**
      * @var array
@@ -125,10 +140,12 @@ class RunReporterExtension extends \Codeception\Extension
             \Codeception\Test\Descriptor::getTestSignatureUnique($e->getTest())
         );
         $outputDir = codecept_output_dir();
-        if (strpos($stepName, 'don\'t see visual changes') !== false) {
+        if (strpos($stepName, 'don\'t see visual changes') !== false && $e->getStep()->hasFailed()) {
             $dataDir = codecept_data_dir();
 
             $arguments = $e->getStep()->getArguments();
+            $this->writeln("# Arguments: " . $filename);
+            $this->writeln(var_export($arguments, true));
             $humanName = $arguments[0];
             $referencePng = mb_strcut($filename, 0, 245, 'utf-8') . '.' . $humanName . '.png';
             $currentPng = mb_strcut($filename, 0, 245, 'utf-8') . '.' . $humanName . '.png';
@@ -230,7 +247,7 @@ class RunReporterExtension extends \Codeception\Extension
         }
     }
 
-    public function sendArtifacts(FailEvent $event)
+    public function testFailPrint(FailEvent $event)
     {
         foreach (self::$artifactsForPush as $artifact) {
             $this->pushArtifactsToRunner($artifact);
@@ -241,45 +258,16 @@ class RunReporterExtension extends \Codeception\Extension
 
     private function pushArtifactsToRunner($filePath, $type = '')
     {
-        $hostIp = getenv('APP_ENV') == 'development' ? 'runner.nginx' : 'runner.nginx';
-        // ssh 192.168.216.88 mkdir /var/www/runner/public/img/artifacts/11
         $this->writeln(" ");
         $this->messageFactory->message('Send artifacts --')->style('comment')->writeln();
-        $artifactDir = sprintf(
-            "/var/www/runner/public/img/artifacts/%s",
-            $this->runId
-        );
-        $command = sprintf(
-            "ssh {$hostIp} \"if [ ! -d %s ]; then mkdir %s; fi\"",
-            $artifactDir,
-            $artifactDir
-        );
-        $this->writeln("# " . $command);
-        exec($command, $resultOutput);
-        $this->writeln(" " . implode(PHP_EOL, $resultOutput));
-
         $newPath = basename($filePath);
-        // scp tests/_output/RushessayCom.Order.NewCustomerCreateOrderAndPayWithCreditCardCest.tryToTest.fail.html 192.168.216.88:/var/www/
-        if ($type) {
-            $newPath = str_replace('.png', ".$type.png", basename($filePath));
-            $newPath = str_replace('#', '', $newPath);
-            $newPath = str_replace(',', '-', $newPath);
-            $command = sprintf(
-                "scp %s {$hostIp}:/var/www/runner/public/img/artifacts/%s/%s",
-                $filePath,
-                $this->runId,
-                $newPath
-            );
-        } else {
-            $command = sprintf(
-                "scp %s {$hostIp}:/var/www/runner/public/img/artifacts/%s/",
-                $filePath,
-                $this->runId
-            );
-        }
-        $this->writeln("# " . $command);
-        exec($command, $resultOutput);
-        $this->writeln(" " . implode(PHP_EOL, $resultOutput));
+
+        $post = [
+            'data' => base64_encode(file_get_contents($filePath)),
+            'name' => $newPath,
+        ];
+        $response = $this->pushToRunner('/test-run/result/artifacts/' . $this->runId, $post);
+        $this->writeln("#Send artifact status: " . $response->getStatusCode());
 
         return $newPath;
     }

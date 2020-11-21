@@ -46,21 +46,6 @@ class ConsumerTestRunnerBridge
 
         $this->runId = $options['runId'];
 
-        $command = "git pull";
-        $this->runCommand($command);
-
-        $command = "composer install";
-        $this->runCommand($command);
-
-        if (!empty($options['branch'])) {
-            $command = sprintf(
-                "./bin/test-codebase.php run -b %s -t %s",
-                escapeshellarg($options['branch']),
-                escapeshellarg($options['type'])
-            );;
-            $this->runCommand($command);
-        }
-
         $tests = [];
         foreach ($options['tests'] as $test) {
             $tests[] = "tests/{$options['type']}/" . str_replace('\\', '/', $test);
@@ -155,7 +140,7 @@ class ConsumerTestRunnerBridge
             ),
         );
 
-        $hostSite = getenv('APP_ENV') == 'development' ? 'http://test-runner.loc' : 'http://test-runner.essay.office';
+        $hostSite = getenv('APP_ENV') == 'development' ? 'http://runner.nginx' : 'http://runner.nginx';
 
         $client = new \Zend\Http\Client("{$hostSite}/test-run/$runId/save-output", $config);
         $client->setRawBody(json_encode($post));

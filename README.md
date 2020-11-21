@@ -57,6 +57,7 @@ stderr_logfile=/var/log/consume.err.log
 stdout_logfile=/var/log/consume.out.log
 
 ## RabbitMQ
-
+RABBITMQ_USER=rabbitmq
+RABBITMQ_PASSWORD=rabbitmq
 Для тестировани в lib/RabbitMQ/configs/config.local.ini нужно заменить  
 

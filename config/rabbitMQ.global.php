@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 return [
     'rabbitMQ' => [
-        'host' => 'rabbit.uncomp.com.test',
+        'host' => getenv('RABBITMQ_HOST'),
         'port' => 5672,
-        'username' => 'guest',
-        'password' => 'guest',
+        'username' => getenv('RABBITMQ_USER'),
+        'password' => getenv('RABBITMQ_PASSWORD'),
     ],
 ];
